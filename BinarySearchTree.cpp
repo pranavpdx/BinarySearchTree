@@ -10,7 +10,7 @@
 #include <string>
 using namespace std;
 
-// instead of creating a seperate class, I used a struct for node
+// instead of creating a seperate class, I used a struct for nodes
 struct Node {
 public: 
     int data;
@@ -22,9 +22,11 @@ public:
 Node* createTree(int array[], int start, int end);
 void printTree(Node* head, int spacing);
 void sortArray(int array[], int numbers);
-void deleteNum(int array[], int num, int range);
+Node* deleteNode(Node* root, int value);
 bool search(Node* head, int num, bool &result);
 void readFile(int array[], char file[], int numbers);
+Node* addNode(Node* root, int value);
+Node* minValueNode(Node* root);
 
 int main()
 {
@@ -75,19 +77,25 @@ int main()
   bool playing = true;
   // asks users what they would like to do next
   while (playing) {
-      cout << "What would you like to do? (REMOVE, SEARCH, or QUIT): ";
+      cout << "What would you like to do? (ADD, REMOVE, SEARCH, or QUIT): ";
       cin.getline(input, 80, '\n');
-      // if they would like to remove
-      if (strcmp(input, "REMOVE") == 0) {
+      // if they would like to add
+      if (strcmp(input, "ADD") == 0) {
+          int num;
+          cout << "What number would you like to add?: ";
+          cin >> num;
+          cin.get();
+          head = addNode(head, num);
+          printTree(head, 0);
+      }
+      // if they would like to remove a node
+      else if (strcmp(input, "REMOVE") == 0) {
           int num;
           cout << "Which number would you like to remove?: ";
           cin >> num;
           cin.get();
           // remove function is called
-          deleteNum(array, num, numbers);
-          cout << "The new binary tree is an follows: \n";
-          numbers = numbers - 1;
-          head = createTree(array, 0, numbers - 1);
+          head = deleteNode(head, num);
           // tree is printed
           printTree(head, 0);
       }
@@ -113,6 +121,23 @@ int main()
   }
   cout << "Have a great day!";
 
+}
+
+Node* addNode(Node* root, int value) {
+    if (root == NULL) {
+        Node* node = new Node();
+        node->data = value;
+        return node;
+    }
+    else {
+        if (value < root->data) {
+            root->left = addNode(root->left, value);
+        }
+        else {
+            root->right = addNode(root->right, value);
+        }
+    }
+    return root;
 }
 // code taken from my heap project; reads in a file of numbers
 void readFile(int array[], char file[], int numbers) {
@@ -167,17 +192,50 @@ bool search(Node* head, int num, bool &result) {
     }
     return result;
 }
-// deltes a number from the array and shofts other numbers down a spot
-void deleteNum(int array[], int num, int range) {
-    bool found = false; 
-
-    for (int i = 0; i < range; i++) {
-        // when found, numbers are shifted
-        if (array[i] == num) { found = true; }
-        if (found == true) {
-            array[i] = array[i + 1];
-        }
+// finds the lowest value node by following the left pathway of a subtree
+Node* minValueNode(Node* root) {
+    Node* current = root;
+    while (current != NULL && current->left != NULL) {
+        current = current->left;
     }
+    return current;
+}
+// deletes a node and return the new head
+Node* deleteNode(Node* root, int value) {
+    // stops if the tree us empty
+    if (root == NULL) {
+        return root;
+    }
+    // checks if node is in the left subtree, if it does then it follows down 
+    if (value < root->data) {
+        root->left = deleteNode(root->left, value);
+    }
+    // checks if node is in right subtree
+    else if (value > root->data) {
+        root->right = deleteNode(root->right, value);
+    }
+    // once the node is found
+    else {
+        // bumps up if the root has no or one children
+        if (root->left == NULL) {
+            Node* temp = root->right;
+            delete root;
+            return temp;
+        }
+        else if (root->right == NULL) {
+            Node* temp = root->left;
+            delete root;
+            return temp;
+        }
+        // runs for nodes with two children, gets the smalles in the subtree
+        Node* temp = minValueNode(root->right);
+        // copys the childs content to the root
+        root->data = temp->data;
+        // deletes the sucessor
+        root->right = deleteNode(root->right, temp->data);
+
+    }
+    return root;
 }
 // sorts the aray in numerical order
 void sortArray(int array[], int n) {
